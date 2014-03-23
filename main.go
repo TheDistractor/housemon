@@ -25,6 +25,7 @@ PORT = 5561
 func main() {
 	flag.Parse() // required, to set up the proper glog configuration
 	flow.LoadConfig(defaults, "./config.txt")
+	flow.DontPanic()
 
 	if flag.NArg() > 0 {
 		if factory, ok := flow.Registry[flag.Arg(0)]; ok {
@@ -76,7 +77,7 @@ func setupWebserver() {
 	c.Add("http", "HTTPServer")
 	c.Add("forever", "Forever") // run forever
 	c.Feed("http.Handlers", flow.Tag{"/", flow.Config["APP_DIR"]})
-	c.Feed("http.Handlers", flow.Tag{"/base", flow.Config["BASE_DIR"]})
+	c.Feed("http.Handlers", flow.Tag{"/base/", flow.Config["BASE_DIR"]})
 	c.Feed("http.Handlers", flow.Tag{"/ws", "<websocket>"})
 	c.Feed("http.Start", flow.Config["PORT"])
 	c.Run()
