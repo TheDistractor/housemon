@@ -19,6 +19,7 @@ const defaults = `
 APP_DIR = ./app
 BASE_DIR = ./base
 DATA_DIR = ./data
+INIT_FILE =
 PORT = 5561
 `
 
@@ -27,6 +28,14 @@ func main() {
 	flow.LoadConfig(defaults, "./config.txt")
 	flow.DontPanic()
 
+	// register more definitions from a JSON-formatted init file, if specified
+	if s := flow.Config["INIT_FILE"]; s != "" {
+		if err := flow.AddToRegistry(s); err != nil {
+			panic(err)
+		}
+	}
+
+	// if a registered circuit name is given on the command line, run it
 	if flag.NArg() > 0 {
 		if factory, ok := flow.Registry[flag.Arg(0)]; ok {
 			factory().Run()
@@ -60,7 +69,6 @@ func setupDatabase() {
 	c.Add("sink", "Sink")
 	c.Connect("db.Out", "sink.In", 0)
 	c.Connect("db.Mods", "sink.In", 0)
-	c.Feed("db.Name", flow.Config["DATA_DIR"])
 	c.Feed("db.In", flow.Tag{"<clear>", "/config/"})
 	for k, v := range flow.Config {
 		c.Feed("db.In", flow.Tag{"/config/" + k, v})
