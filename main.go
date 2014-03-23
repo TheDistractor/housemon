@@ -1,161 +1,122 @@
 package main
 
 import (
-	"bytes"
-	"flag"
+	"bufio"
 	"fmt"
 	"log"
-	"net/url"
-	"strconv"
+	"net/http"
+	"os"
 	"strings"
-	"regexp"
-	_"reflect"
-	ring "container/ring"
 
-	"github.com/jcw/jeebus"
-	"github.com/jcw/housemon/drivers"
+	"github.com/jcw/flow"
+	_ "github.com/jcw/jeebus/gadgets"
 )
 
-//TODO: This is a quick fix update/upgrade to get RF12demo decoder working with registry system
-//There are lots of optimisations that can now be made
+var settings = map[string]string{
+	"appDir": "./app",
+	"baseDir": "./base",
+	"dataDir": "./data",
+	"port": "5561",
+}
 
 func main() {
-	var mqttAddr string
-
-	flag.StringVar(&mqttAddr, "mqtt", ":1883",
-		"connect to MQTT server on <host><:port>")
-	flag.Parse()
-
-	if !strings.Contains(mqttAddr, "://") {
-		mqttAddr = "tcp://" + mqttAddr
-	}
-	murl, err := url.Parse(mqttAddr)
-	check(err)
-
-	client := jeebus.NewClient(murl)
-
-	decoder := &RF12demoDecodeService{ &RF12demoDb{ make(map[string]*rf12msg),make(map[string]bool) },client, ring.New(10) }
-	client.Register("io/RF12demo/+/#", decoder)  // + represents the 'instance' of the Tag
+	loadSettings("./settings.txt")
 	
-	<- client.Done
-
-}
-
-
-//TODO: Quick reconfig - NOT to be confused with .ino HEADER positions.
-const (
-	RF12BAND = iota
-	RF12GRP
-	RF12NODEID
-)
-
-type rf12msg struct {
-	ID   [3]int `json:"id"`
-	Dev  string `json:"dev"`
-	Loc  string `json:"loc"`
-	Text string `json:"text"`
-	Time int64  `json:"time"`
-	Astx bool
-	Node int
-}
-
-//this contains the 'instances' of RF12 we have seen key=topic
-type RF12demoDb struct {
-	Db map[string]*rf12msg
-	ConfigFlag map[string]bool
-}
-
-//"text":" A i1 g178 @ 868 MHz "
-var confRegex = regexp.MustCompile(`^ [@-_] i(\d+)(\*)? g(\d+) @ (\d\d\d) MHz`)
-
-type RF12demoDecodeService struct {
-	*RF12demoDb
-	client *jeebus.Client
-	MsgBuffer *ring.Ring  //TODO: Add in message buffer when init moved outside (to capture OK with no config)
-}
-
-func (s *RF12demoDecodeService) Handle(m *jeebus.Message) {
-
-	//fmt.Println("Message:", string(m.P) )
-
-	keys := strings.Split(m.T,"/")
-	rwTopic := strings.Join( keys[:len(keys)-1], "/")
-	log.Print(rwTopic)
-	timestamp := keys[len(keys)-1:][0]
-	text := string(m.P)
-
-	inst,ok := s.Db[rwTopic]
-	if !ok  {
-		inst  = &rf12msg{} //not seen this rf12, create its 'state container'
-		s.Db[rwTopic] = inst
-		s.ConfigFlag[rwTopic] = false  //only tracks if we have sent init
+	fmt.Printf("Starting webserver at http://localhost:%s/\n", settings["port"])
+	
+	// show an intro page via a special webserver if the main app dir is absent
+	if !fileExists(settings["appDir"]) {
+		startIntroServer() // never returns
 	}
 
-	if !s.ConfigFlag[rwTopic] {
-		//hack: if we never seen a config from this rf12, ask for one
-		//TODO: put this on watchdog timer
-		s.ConfigFlag[rwTopic] = true
-		//TODO: direct clone of prev code - only directed to specific 'instance' of rf12demo.
-		msg := map[string]interface{}{"text": "c 0x v"}
-		s.client.Publish(rwTopic, msg)
+	c := flow.NewCircuit()
+	c.Add("http", "HTTPServer")
+	c.Add("forever", "Forever")
+	c.Feed("http.Handlers", flow.Tag{"/", settings["appDir"]})
+	c.Feed("http.Handlers", flow.Tag{"/base", settings["baseDir"]})
+	c.Feed("http.Handlers", flow.Tag{"/ws", "<websocket>"})
+	c.Feed("http.Start", settings["port"])
+	c.Run()
+}
 
-	}
+// startIntroServer shows a single fixed page explaining what's going on
+func startIntroServer() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(introPage))
+	})
+	panic(http.ListenAndServe(":" + settings["port"], nil))
+}
 
-	//TODO:ring buffer would wrap OK processing for a 'onetime' empty
-
-	//TODO: This mainly unchanged apart from using 'instance' data - no attempt to tidy - yet!
-	if strings.HasPrefix(text, "OK ") {
-		var buf bytes.Buffer
-		var vals []string
-
-		vals = strings.Split(text[3:], " ")
-		rnode , err := strconv.Atoi(vals[0])
-		rnode &= 0x1F
-		check(err)
-		// convert the line of decimal byte values to a byte buffer
-
-		for _, v := range vals {
-			n, err := strconv.Atoi(v)
-			check(err)
-			buf.WriteByte(byte(n))
+// fileExists returns true if the specified file or directory exists
+func fileExists(name string) bool {
+	if name != "" {
+		if fd, err := os.Open(name); err == nil {
+			fd.Close()
+			return true
 		}
-		var now int64
-		now,err  = strconv.ParseInt(string(timestamp),10,64)
-
-		inst.Dev = rwTopic   //we can simply use the endpoint minus the timestamp instead of strings.SplitN(m.T, "/", 3)[2]
-		hex := fmt.Sprintf("%X", buf.Bytes())
-
-		fmt.Printf("%d %s %s\n", now, inst.Dev, hex)
-
-		inst.ID[RF12NODEID] = rnode  //this changes possibly every message rec'd
-
-		inst.Text = hex
-		inst.Time = now
-
-		if found, nT, nL := drivers.JNodeType(inst.ID[RF12BAND], inst.ID[RF12GRP], inst.ID[RF12NODEID], inst.Time); found {
-			inst.Loc = nL
-			s.client.Publish("rf12/"+nT, inst)
-		} else {
-			inst.Loc = "unknown"
-			s.client.Publish("rf12/unknown", inst)
-		}
-	} else if conf := confRegex.FindStringSubmatch(text); conf != nil {
-		inst.Node, _ = strconv.Atoi(conf[1]) //nodeid
-		inst.Astx = conf[2] == "*"
-		inst.ID[RF12GRP], _ = strconv.Atoi(conf[3]) //grp
-		inst.ID[RF12BAND], _ = strconv.Atoi(conf[4]) //band
-		//fmt.Println("groupID: ", inst.ID[RF12GRP])
-
-		fmt.Println("Processing Config:", inst)
-		s.Db[rwTopic] = inst
-
-	} else if strings.HasPrefix(text, "[") && strings.Contains(text, "]") {
-		fmt.Println("Sketch/Tag located:",text)
 	}
+	return false
 }
 
-func check(err error) {
+// loadSettings parses a settings file, if it exists, to configure some basic
+// application settings, such as where the app/ and data/ directories are.
+// For "fooBarDir", it also allows overriding via a "FOO_BAR_DIR" env variable.
+func loadSettings(filename string) {
+	fd, err := os.Open(filename)
 	if err != nil {
-		log.Fatal(err)
+		return
+	}
+	defer fd.Close()
+
+	scanner := bufio.NewScanner(fd)
+	for scanner.Scan() {
+		line := strings.Trim(scanner.Text(), " \t")
+		if line != "" && !strings.HasPrefix(line, "#") {
+			fields := strings.SplitN(line, "=", 2)
+			if len(fields) != 2 {
+				log.Fatalln("cannot parse settings:", scanner.Text())
+			}
+			key := strings.Trim(fields[0], " \t")
+			value := strings.Trim(fields[1], " \t")
+			env := os.Getenv(key)
+			if env != "" {
+				value = env
+			}
+			settings[capsToAllCaps(key)] = value
+		}
 	}
 }
+
+// capsToAllCaps converts "fooBarDir" to "FOO_BAR_DIR"
+func capsToAllCaps(s string) (result string) {
+	s = strings.ToLower(s)
+	t := strings.Split(s, "_")
+	for i, _ := range t {
+		result += strings.ToUpper(t[i][:1]) + t[i][1:]
+	}
+	return
+}
+
+// introPage contains the HTML shown when the application cannot start normally
+const introPage = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Welcome to HouseMon</title>
+  </head>
+  <body>
+    <blockquote>
+      <h3>Welcome to HouseMon</h3>
+      <p>Whoops ... the main application files were not found.</p>
+      <p>Please launch this application from the HouseMon directory.</p>
+    </blockquote>
+    <script>
+      setInterval(function() {
+        ws = new WebSocket("ws://" + location.host + "/ws");
+        ws.onopen = function() {
+          window.location.reload(true)
+        }
+      }, 1000)
+    </script>
+  </body>
+</html>`

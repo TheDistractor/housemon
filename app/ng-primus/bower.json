@@ -1,6 +1,0 @@
-{
-  "name": "ng-primus",
-  "dependencies": {
-    "angular-animate": "~1.2.0"
-  }
-}

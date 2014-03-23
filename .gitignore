@@ -1,6 +1,4 @@
-bower_components
-node_modules
-/logger
-/storage
-/storage-old
+/data
 /files
+/logger
+/node_modules
