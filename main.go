@@ -13,11 +13,11 @@ import (
 var VERSION = "0.9.0" // can be adjusted by goxc
 
 const defaults = `
-    # can be overridden with environment variables
-    APP_DIR = ./app
-    BASE_DIR = ./base
-    DATA_DIR = ./data
-    PORT = 5561
+# can be overridden with environment variables
+APP_DIR = ./app
+BASE_DIR = ./base
+DATA_DIR = ./data
+PORT = 5561
 `
 
 var config = jeebus.LoadConfig(defaults, "./config.txt")
@@ -66,8 +66,8 @@ func main() {
 	setupWebserver()
 }
 
+// database setup, save version and current config settings
 func setupDatabase() {
-	// database setup, save version and current config settings
 	c := flow.NewCircuit()
 	c.Add("db", "LevelDB")
 	c.Add("sink", "Sink")
@@ -83,8 +83,8 @@ func setupDatabase() {
 	c.Run()
 }
 
+// webserver setup
 func setupWebserver() {
-	// webserver setup
 	c := flow.NewCircuit()
 	c.Add("http", "HTTPServer")
 	c.Add("forever", "Forever") // run forever
