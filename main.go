@@ -18,12 +18,12 @@ var config = flag.String("c", "./config.txt", "name of configuration file to use
 
 // defaults can also be overridden through environment variables
 const defaults = `
-APP_DIR   = ./app
-BASE_DIR  = ./base
-DATA_DIR  = ./data
-HTTP_PORT = :5561
-MQTT_PORT = :1883
-INIT_FILE =
+APP_DIR    = ./app
+BASE_DIR   = ./base
+DATA_DIR   = ./data
+HTTP_PORT  = :5561
+MQTT_PORT  = :1883
+SETUP_FILE =
 `
 
 func main() {
@@ -31,8 +31,8 @@ func main() {
 	flow.LoadConfig(defaults, *config)
 	flow.DontPanic()
 
-	// register more definitions from a JSON-formatted init file, if specified
-	if s := flow.Config["INIT_FILE"]; s != "" {
+	// register more definitions from a JSON-formatted setup file, if specified
+	if s := flow.Config["SETUP_FILE"]; s != "" {
 		if err := flow.AddToRegistry(s); err != nil {
 			panic(err)
 		}
@@ -73,7 +73,7 @@ func main() {
 	for k, v := range flow.Config {
 		c.Feed("db.In", flow.Tag{"/config/" + k, v})
 	}
-	c.Feed("db.In", flow.Tag{"<register>", "/gadget/init"})
+	// c.Feed("db.In", flow.Tag{"<register>", "/gadget/init"})
 
 	// wait for db to finish, then dispatch to the "init" gadget, if found
 	c.Add("wait", "Waiter")
