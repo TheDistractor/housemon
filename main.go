@@ -14,6 +14,8 @@ import (
 var VERSION = "0.9.0" // can be adjusted by goxc at link time
 var BUILD_DATE = ""   // can be adjusted by goxc at link time
 
+var config = flag.String("c", "./config.txt", "name of configuration file to use")
+
 // defaults can also be overridden through environment variables
 const defaults = `
 APP_DIR   = ./app
@@ -26,7 +28,7 @@ INIT_FILE =
 
 func main() {
 	flag.Parse() // required, to set up the proper glog configuration
-	flow.LoadConfig(defaults, "./config.txt")
+	flow.LoadConfig(defaults, *config)
 	flow.DontPanic()
 
 	// register more definitions from a JSON-formatted init file, if specified
@@ -67,12 +69,13 @@ func main() {
 	c.Connect("db.Out", "sink.In", 0)
 	c.Connect("db.Mods", "sink.In", 0)
 	c.Feed("db.In", flow.Tag{"<clear>", "/config/"})
-	for k, v := range flow.Config {
-		c.Feed("db.In", flow.Tag{"/config/" + k, v})
-	}
 	c.Feed("db.In", flow.Tag{"/config/appName", "HouseMon"})
 	c.Feed("db.In", flow.Tag{"/config/version", VERSION})
 	c.Feed("db.In", flow.Tag{"/config/buildDate", BUILD_DATE})
+	c.Feed("db.In", flow.Tag{"/config/configFile", *config})
+	for k, v := range flow.Config {
+		c.Feed("db.In", flow.Tag{"/config/" + k, v})
+	}
 
 	// webserver setup
 	c.Add("http", "HTTPServer")
