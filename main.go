@@ -19,8 +19,9 @@ const defaults = `
 APP_DIR = ./app
 BASE_DIR = ./base
 DATA_DIR = ./data
+HTTP_PORT = :5561
+MQTT_PORT = :1883
 INIT_FILE =
-PORT = 5561
 `
 
 func main() {
@@ -45,7 +46,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Starting webserver for http://localhost:%s/\n", flow.Config["PORT"])
+	fmt.Printf("Starting webserver for http://localhost:%s/\n",
+		flow.Config["HTTP_PORT"])
 
 	// show intro page via a static webserver if the main app dir is absent
 	fd, err := os.Open(flow.Config["APP_DIR"])
@@ -53,18 +55,14 @@ func main() {
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(introPage))
 		})
-		panic(http.ListenAndServe(":"+flow.Config["PORT"], nil))
+		panic(http.ListenAndServe(":"+flow.Config["HTTP_PORT"], nil))
 	}
 	fd.Close()
 
-	// normal startup: save config info in database, then start the webserver
-	setupDatabase()
-	setupWebserver()
-}
-
-// database setup, save version and current config settings
-func setupDatabase() {
+	// normal startup: save config info in database and start the webserver
 	c := flow.NewCircuit()
+
+	// database setup, save version and current config settings
 	c.Add("db", "LevelDB")
 	c.Add("sink", "Sink")
 	c.Connect("db.Out", "sink.In", 0)
@@ -76,18 +74,15 @@ func setupDatabase() {
 	c.Feed("db.In", flow.Tag{"/config/appName", "HouseMon"})
 	c.Feed("db.In", flow.Tag{"/config/version", VERSION})
 	c.Feed("db.In", flow.Tag{"/config/buildDate", BUILD_DATE})
-	c.Run()
-}
 
-// webserver setup
-func setupWebserver() {
-	c := flow.NewCircuit()
+	// webserver setup
 	c.Add("http", "HTTPServer")
-	c.Add("forever", "Forever") // run forever
 	c.Feed("http.Handlers", flow.Tag{"/", flow.Config["APP_DIR"]})
 	c.Feed("http.Handlers", flow.Tag{"/base/", flow.Config["BASE_DIR"]})
 	c.Feed("http.Handlers", flow.Tag{"/ws", "<websocket>"})
-	c.Feed("http.Start", flow.Config["PORT"])
+
+	// start the ball rolling, keep running forever
+	c.Add("forever", "Forever")
 	c.Run()
 }
 
@@ -127,9 +122,9 @@ func init() {
 	}
 }
 
-// Here is an example of how to define a new gadget. This one has no input or
+// This example illustrates how to define a new gadget. It has no input or
 // output ports, is registered using a lowercase name, and has a help entry.
-// It's only intended for use from the command line, i.e. "housemon info".
+// This is only intended for use from the command line, i.e. "housemon info".
 
 func init() {
 	flow.Registry["info"] = func() flow.Circuitry { return &infoCmd{} }
