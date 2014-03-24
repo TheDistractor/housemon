@@ -16,9 +16,9 @@ var BUILD_DATE = ""   // can be adjusted by goxc at link time
 
 // defaults can also be overridden through environment variables
 const defaults = `
-APP_DIR = ./app
-BASE_DIR = ./base
-DATA_DIR = ./data
+APP_DIR   = ./app
+BASE_DIR  = ./base
+DATA_DIR  = ./data
 HTTP_PORT = :5561
 MQTT_PORT = :1883
 INIT_FILE =
@@ -46,8 +46,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Starting webserver for http://localhost:%s/\n",
-		flow.Config["HTTP_PORT"])
+	fmt.Printf("Starting webserver for http://%s/\n", flow.Config["HTTP_PORT"])
 
 	// show intro page via a static webserver if the main app dir is absent
 	fd, err := os.Open(flow.Config["APP_DIR"])
@@ -55,7 +54,7 @@ func main() {
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(introPage))
 		})
-		panic(http.ListenAndServe(":"+flow.Config["HTTP_PORT"], nil))
+		panic(http.ListenAndServe(flow.Config["HTTP_PORT"], nil))
 	}
 	fd.Close()
 
@@ -124,7 +123,7 @@ func init() {
 
 // This example illustrates how to define a new gadget. It has no input or
 // output ports, is registered using a lowercase name, and has a help entry.
-// This is only intended for use from the command line, i.e. "housemon info".
+// This is only useful from the command line, i.e. "housemon info".
 
 func init() {
 	flow.Registry["info"] = func() flow.Circuitry { return &infoCmd{} }
