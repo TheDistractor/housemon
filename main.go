@@ -63,11 +63,8 @@ func main() {
 	// normal startup: save config info in database and start the webserver
 	c := flow.NewCircuit()
 
-	// database setup, save version and current config settings
+	// database setup, save current config settings, register init gadget
 	c.Add("db", "LevelDB")
-	c.Add("sink", "Sink")
-	c.Connect("db.Out", "sink.In", 0)
-	c.Connect("db.Mods", "sink.In", 0)
 	c.Feed("db.In", flow.Tag{"<clear>", "/config/"})
 	c.Feed("db.In", flow.Tag{"/config/appName", "HouseMon"})
 	c.Feed("db.In", flow.Tag{"/config/version", VERSION})
@@ -76,13 +73,21 @@ func main() {
 	for k, v := range flow.Config {
 		c.Feed("db.In", flow.Tag{"/config/" + k, v})
 	}
+	c.Feed("db.In", flow.Tag{"<register>", "/gadget/init"})
+
+	// wait for db to finish, then dispatch to the "init" gadget
+	c.Add("wait", "Waiter")
+	c.Add("disp", "Dispatcher")
+	c.Connect("db.Out", "wait.Gate", 0)
+	c.Connect("wait.Out", "disp.In", 0)
+	c.Feed("wait.In", flow.Tag{"<dispatch>", "init"})
 
 	// webserver setup
 	c.Add("http", "HTTPServer")
 	c.Feed("http.Handlers", flow.Tag{"/", flow.Config["APP_DIR"]})
 	c.Feed("http.Handlers", flow.Tag{"/base/", flow.Config["BASE_DIR"]})
 	c.Feed("http.Handlers", flow.Tag{"/ws", "<websocket>"})
-
+	
 	// start the ball rolling, keep running forever
 	c.Add("forever", "Forever")
 	c.Run()
