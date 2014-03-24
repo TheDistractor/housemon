@@ -75,7 +75,7 @@ func main() {
 	}
 	c.Feed("db.In", flow.Tag{"<register>", "/gadget/init"})
 
-	// wait for db to finish, then dispatch to the "init" gadget
+	// wait for db to finish, then dispatch to the "init" gadget, if found
 	c.Add("wait", "Waiter")
 	c.Add("disp", "Dispatcher")
 	c.Connect("db.Out", "wait.Gate", 0)
@@ -127,21 +127,4 @@ func init() {
 		fmt.Fprintf(os.Stderr, "\nTry 'help' for more info, or visit %s\n",
 			"http://jeelabs.net/projects/housemon/wiki")
 	}
-}
-
-// This example illustrates how to define a new gadget. It has no input or
-// output ports, is registered using a lowercase name, and has a help entry.
-// This is only useful from the command line, i.e. "housemon info".
-
-func init() {
-	flow.Registry["info"] = func() flow.Circuitry { return &infoCmd{} }
-	jeebus.Help["info"] = `Show the list of registered gadgets and circuits.`
-}
-
-type infoCmd struct{ flow.Gadget }
-
-func (g *infoCmd) Run() {
-	fmt.Println("Registered gadgets and circuits:\n")
-	flow.PrintRegistry()
-	fmt.Println()
 }
