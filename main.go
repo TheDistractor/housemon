@@ -73,7 +73,7 @@ func main() {
 	for k, v := range flow.Config {
 		c.Feed("db.In", flow.Tag{"/config/" + k, v})
 	}
-	// c.Feed("db.In", flow.Tag{"<register>", "/gadget/init"})
+	c.Feed("db.In", flow.Tag{"<register>", "/gadget/init"})
 
 	// wait for db to finish, then dispatch to the "init" gadget, if found
 	c.Add("wait", "Waiter")
