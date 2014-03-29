@@ -9,6 +9,7 @@ import (
 
 	"github.com/jcw/flow"
 	jeebus "github.com/jcw/jeebus/gadgets"
+	_ "github.com/jcw/housemon/gadgets"
 )
 
 var VERSION = "0.9.0" // can be adjusted by goxc at link time
@@ -18,12 +19,13 @@ var config = flag.String("c", "./config.txt", "name of configuration file to use
 
 // defaults can also be overridden through environment variables
 const defaults = `
-APP_DIR    = ./app
-BASE_DIR   = ./base
-DATA_DIR   = ./data
-HTTP_PORT  = :5561
-MQTT_PORT  = :1883
-SETUP_FILE =
+APP_DIR     = ./app
+BASE_DIR    = ../jeebus/base
+DATA_DIR    = ./data
+GADGETS_DIR = ./gadgets
+HTTP_PORT   = :5561
+MQTT_PORT   = :1883
+SETUP_FILE  = ./setup.json
 `
 
 func main() {
