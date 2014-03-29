@@ -5,12 +5,12 @@ ng = angular.module 'myApp', [
 ]
 
 ng.value 'appInfo',
-  name: 'JeeBus'
+  name: 'HouseMon'
   version: '0.9.0'
-  home: 'https://github.com/jcw/jeebus'
+  home: 'https://github.com/jcw/housemon'
 
 ng.run (jeebus) ->
-  jeebus.connect 'jeebus'
+  jeebus.connect 'jeebus' # use same as JB for now
 
 ng.run ($rootScope, appInfo) ->
   $rootScope.shared = {}
