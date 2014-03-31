@@ -69,7 +69,9 @@ type JeeBoot struct {
 // Start decoding JeeBoot packets.
 func (w *JeeBoot) Run() {
 	if m, ok := <-w.Cfg; ok {
-		err := json.Unmarshal(m.([]byte), &w.cfg)
+		data, err := json.Marshal(m) // TODO: messy, encode again, then decode!
+		flow.Check(err)
+		err = json.Unmarshal(data, &w.cfg)
 		flow.Check(err)
 		glog.Infof("config: %+v", w.cfg)
 		for _, f := range w.cfg.SwIDs {
