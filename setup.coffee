@@ -20,17 +20,19 @@ circuits.init =
   gadgets: [
     { name: "mqtt", type: "MQTTServer" }
 		{ name: "replay", type: "replay" }
+    { name: "sub", type: "DataSub" }
     { name: "pub", type: "MQTTPub" }
     { name: "dummy", type: "Pipe" } # needed for dispatcher in HouseMon
     { name: "driverFill", type: "driverFill" } # pre-load the database
     { name: "tableFill", type: "tableFill" }   # pre-load the database
   ]
   wires: [
-    { from: "replay.Out", to: "pub.In" }
     { from: "mqtt.PortOut", to: "pub.Port" }
+    { from: "sub.Out", to: "pub.In" }
   ]
   feeds: [
     { data: ":1883",  to: "mqtt.Port" }
+    { data: "/",  to: "sub.In" }
   ]
   labels: [
     { external: "In", internal: "dummy.In" }
@@ -70,9 +72,6 @@ circuits.replay =
     { data: "[RF12demo.10] _ i31* g5 @ 868 MHz", to: "rf.In" }
     { data: "./gadgets/rfdata/20121130.txt.gz", to: "lr.Name" }
     { data: "./logger", to: "lg.Dir" }
-  ]
-  labels: [
-    { external: "Out", internal: "db.Out" }
   ]
   
 # the node mapping for nodes at JeeLabs, as pre-configured circuit
@@ -133,7 +132,6 @@ circuits.rf12toDatabase =
   ]
   labels: [
     { external: "In", internal: "st.In" }
-    { external: "Out", internal: "db.Mods" }
   ]
 
 # serial port test
