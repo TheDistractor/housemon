@@ -128,7 +128,6 @@ circuits.rf12toDatabase =
     { from: "sr.Out", to: "db.In" }
   ]
   feeds: [
-    { data: "./data", to: "db.Name" }
     { data: "Sketch-", to: "d1.Prefix" }
     { data: "Node-", to: "d2.Prefix" }
   ]
@@ -191,7 +190,6 @@ circuits.driverFill =
     { name: "db", type: "LevelDB" }
   ]
   feeds: [
-    { data: "./data", to: "db.Name" }
     { to: "db.In", tag: "/driver/roomNode/temp", \
       data: { name: "Temperature", unit: "°C", scale: 1 } }
     { to: "db.In", tag: "/driver/roomNode/humi", \
@@ -236,8 +234,6 @@ circuits.tableFill =
     { name: "db", type: "LevelDB" }
   ]
   feeds: [
-    { data: "./data", to: "db.Name" }
-
     { to: "db.In", tag: "/table/table", data: { attr: "id attr" } }
     { to: "db.In", tag: "/column/table/id", data: { name: "Ident" } }
     { to: "db.In", tag: "/column/table/attr", data: { name: "Attributes" } }
@@ -267,7 +263,6 @@ circuits.try1 =
     { name: "db", type: "LevelDB" }
   ]
   feeds: [
-    { data: "./data", to: "db.Name" }
     { tag: "<range>", data: "/reading/", to: "db.In" }
   ]
 

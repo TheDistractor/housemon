@@ -345,10 +345,6 @@
         ],
         "feeds": [
             {
-                "data": "./data",
-                "to": "db.Name"
-            },
-            {
                 "data": "Sketch-",
                 "to": "d1.Prefix"
             },
@@ -490,10 +486,6 @@
             }
         ],
         "feeds": [
-            {
-                "data": "./data",
-                "to": "db.Name"
-            },
             {
                 "to": "db.In",
                 "tag": "/driver/roomNode/temp",
@@ -657,10 +649,6 @@
         ],
         "feeds": [
             {
-                "data": "./data",
-                "to": "db.Name"
-            },
-            {
                 "to": "db.In",
                 "tag": "/table/table",
                 "data": {
@@ -796,10 +784,6 @@
             }
         ],
         "feeds": [
-            {
-                "data": "./data",
-                "to": "db.Name"
-            },
             {
                 "tag": "<range>",
                 "data": "/reading/",
