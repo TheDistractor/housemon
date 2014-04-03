@@ -61,6 +61,18 @@
             {
                 "name": "tableFill",
                 "type": "tableFill"
+            },
+            {
+                "name": "sub2",
+                "type": "DataSub"
+            },
+            {
+                "name": "aggr",
+                "type": "Aggregator"
+            },
+            {
+                "name": "db",
+                "type": "LevelDB"
             }
         ],
         "wires": [
@@ -71,6 +83,14 @@
             {
                 "from": "sub.Out",
                 "to": "pub.In"
+            },
+            {
+                "from": "sub2.Out",
+                "to": "aggr.In"
+            },
+            {
+                "from": "aggr.Out",
+                "to": "db.In"
             }
         ],
         "feeds": [
@@ -81,6 +101,10 @@
             {
                 "data": "/",
                 "to": "sub.In"
+            },
+            {
+                "data": "sensor/",
+                "to": "sub2.In"
             }
         ],
         "labels": [
