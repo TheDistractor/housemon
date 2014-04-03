@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jcw/flow"
+	"github.com/jcw/jeebus/gadgets"
 )
 
 func init() {
@@ -50,9 +51,9 @@ func (w *Logger) logOneLine(asof time.Time, text, port string) {
 
 	if w.fd == nil || datePath != w.fd.Name() {
 		if w.fd != nil {
+			name := w.fd.Name()
 			w.fd.Close()
-			// tell anyone listening - we are about to cycle a file
-			w.Out.Send(w.fd.Name()) //TODO: use intermediary var, rather than rely on *file.name is never set after Close()
+			w.Out.Send(name) // report the closed file
 		}
 		mode := os.O_WRONLY | os.O_APPEND | os.O_CREATE
 		fd, err := os.OpenFile(datePath, mode, os.ModePerm)
@@ -63,6 +64,6 @@ func (w *Logger) logOneLine(asof time.Time, text, port string) {
 	// 	L 01:02:03.537 usb-A40117UK OK 9 25 54 66 235 61 210 226 33 19
 	hour, min, sec := asof.Clock()
 	line := fmt.Sprintf("L %02d:%02d:%02d.%03d %s %s\n",
-		hour, min, sec, asof.Nanosecond()/1000000, port, text)
+		hour, min, sec, jeebus.TimeToMs(asof) % 1000, port, text)
 	w.fd.WriteString(line)
 }
