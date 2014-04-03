@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jcw/flow"
+	"github.com/jcw/jeebus/gadgets"
 )
 
 func init() {
@@ -206,7 +207,7 @@ func (g *PutReadings) Run() {
 
 		id := fmt.Sprintf("RF12:%d:%d", rf12["group"], node["<node>"])
 		data := map[string]interface{}{
-			"ms":  asof.UnixNano() / 1000000,
+			"ms":  jeebus.TimeToMs(asof),
 			"val": values,
 			"loc": location,
 			"typ": decoder,

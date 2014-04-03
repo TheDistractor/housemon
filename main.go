@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/jcw/flow"
-	jeebus "github.com/jcw/jeebus/gadgets"
 	_ "github.com/jcw/housemon/gadgets"
+	jeebus "github.com/jcw/jeebus/gadgets"
 )
 
 var VERSION = "0.9.0" // can be adjusted by goxc at link time
@@ -89,7 +89,7 @@ func main() {
 	c.Feed("http.Handlers", flow.Tag{"/", flow.Config["APP_DIR"]})
 	c.Feed("http.Handlers", flow.Tag{"/base/", flow.Config["BASE_DIR"]})
 	c.Feed("http.Handlers", flow.Tag{"/ws", "<websocket>"})
-	
+
 	// start the ball rolling, keep running forever
 	c.Add("forever", "Forever")
 	c.Run()

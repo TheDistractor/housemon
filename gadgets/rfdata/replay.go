@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jcw/flow"
+	"github.com/jcw/jeebus/gadgets"
 )
 
 func init() {
@@ -83,7 +84,7 @@ func (w *LogReplayer) Run() {
 		case time.Time:
 			t = v
 		case string:
-			times = append(times, int((t.UnixNano()/1000000)%MillisPerDay))
+			times = append(times, int(jeebus.TimeToMs(t)%MillisPerDay))
 			texts = append(texts, v)
 		}
 	}
@@ -92,7 +93,7 @@ func (w *LogReplayer) Run() {
 	times = append(times, times[0]+MillisPerDay)
 	for {
 		// find best candidate using binary search
-		ms := int((time.Now().UnixNano() / 1000000) % MillisPerDay)
+		ms := int(jeebus.TimeToMs(time.Now()) % MillisPerDay)
 		i := sort.SearchInts(times, ms)
 		// sleep until it's time for that next entry
 		time.Sleep(time.Duration(times[i]-ms) * time.Millisecond)

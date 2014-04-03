@@ -43,6 +43,10 @@
                 "type": "replay"
             },
             {
+                "name": "sub",
+                "type": "DataSub"
+            },
+            {
                 "name": "pub",
                 "type": "MQTTPub"
             },
@@ -61,18 +65,22 @@
         ],
         "wires": [
             {
-                "from": "replay.Out",
-                "to": "pub.In"
-            },
-            {
                 "from": "mqtt.PortOut",
                 "to": "pub.Port"
+            },
+            {
+                "from": "sub.Out",
+                "to": "pub.In"
             }
         ],
         "feeds": [
             {
                 "data": ":1883",
                 "to": "mqtt.Port"
+            },
+            {
+                "data": "/",
+                "to": "sub.In"
             }
         ],
         "labels": [
@@ -173,12 +181,6 @@
             {
                 "data": "./logger",
                 "to": "lg.Dir"
-            }
-        ],
-        "labels": [
-            {
-                "external": "Out",
-                "internal": "db.Out"
             }
         ]
     },
@@ -357,10 +359,6 @@
             {
                 "external": "In",
                 "internal": "st.In"
-            },
-            {
-                "external": "Out",
-                "internal": "db.Mods"
             }
         ]
     },
