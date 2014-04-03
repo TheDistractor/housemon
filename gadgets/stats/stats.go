@@ -27,11 +27,11 @@ type Aggregator struct {
 }
 
 type accumulator struct {
-	Num    int   `json:"n"`
-	Low    int   `json:"l"`
-	High   int   `json:"h"`
+	Num  int `json:"n"`
+	Low  int `json:"l"`
+	High int `json:"h"`
 	// StdDev int   `json:"d"`
-	Sum    int64 `json:"s"`
+	Sum int64 `json:"s"`
 
 	// m2  int64
 	slot int
@@ -53,7 +53,8 @@ func (g *Aggregator) Run() {
 	for m := range g.In {
 		if t, ok := m.(flow.Tag); ok {
 			n := strings.LastIndex(t.Tag, "/")
-			// sensor/meterkast/c3/1396556362024
+			// expects input tags like these:
+			// 	sensor/meterkast/c3/1396556362024 = 2396
 			if n > 0 {
 				prefix := t.Tag[:n+1]
 				ms, err := strconv.ParseInt(t.Tag[n+1:], 10, 64)
@@ -89,6 +90,9 @@ func (g *Aggregator) process(prefix string, ms int64, val int) {
 }
 
 func (g *Aggregator) flush(prefix string) {
+	// tags sent out look like this, once converted to JSON:
+	// 	aggregate/meterkast/p3/1m/23275939
+	//	 = {"n":3,"l":2375,"h":2401,"s":7172}
 	accum := g.stats[prefix]
 	glog.Infoln("flush", prefix, accum)
 	n := strings.Index(prefix, "/")
