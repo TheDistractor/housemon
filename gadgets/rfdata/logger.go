@@ -18,7 +18,7 @@ type Logger struct {
 	flow.Gadget
 	Dir flow.Input
 	In  flow.Input
-
+	Out flow.Output //the full filename the logger has just cycled
 	dir string
 	fd  *os.File
 }
@@ -51,6 +51,8 @@ func (w *Logger) logOneLine(asof time.Time, text, port string) {
 	if w.fd == nil || datePath != w.fd.Name() {
 		if w.fd != nil {
 			w.fd.Close()
+			// tell anyone listening - we are about to cycle a file
+			w.Out.Send(w.fd.Name()) //TODO: use intermediary var, rather than rely on *file.name is never set after Close()
 		}
 		mode := os.O_WRONLY | os.O_APPEND | os.O_CREATE
 		fd, err := os.OpenFile(datePath, mode, os.ModePerm)
