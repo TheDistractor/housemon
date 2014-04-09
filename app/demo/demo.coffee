@@ -21,6 +21,6 @@ demoCtrl = ($scope, jeebus) ->
         $scope.message = r
 
   $scope.mqttTest = ->
-    jeebus.gadget 'MQTTSub', Topic: '/reading/#', Port: ':1883'
+    jeebus.gadget 'MQTTSub', In: '/reading/#', Port: ':1883'
       .on 'Out', (r) ->
         $scope.message = r
