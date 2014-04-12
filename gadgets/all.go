@@ -5,5 +5,6 @@ import (
 	// "github.com/jcw/flow"
 	_ "github.com/jcw/housemon/gadgets/decoders"
 	_ "github.com/jcw/housemon/gadgets/rfdata"
+	_ "github.com/jcw/housemon/gadgets/stats"
 	_ "github.com/jcw/jeebus/gadgets"
 )

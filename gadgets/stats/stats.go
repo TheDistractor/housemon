@@ -30,12 +30,11 @@ type accumulator struct {
 	Num  int `json:"n"`
 	Low  int `json:"l"`
 	High int `json:"h"`
-	StdDev float64   `json:"d"`
+	// StdDev int   `json:"d"`
 	Sum int64 `json:"s"`
 
 	// m2  int64
 	slot int
-	ss *StreamStats
 }
 
 // Start collecting values, emit aggregated results when a time step occurs.
@@ -77,11 +76,10 @@ func (g *Aggregator) process(prefix string, ms int64, val int) {
 		if ok {
 			g.flush(prefix)
 		}
-		accum = accumulator{slot: slot, Low: val, High: val, ss: &StreamStats{} }
+		accum = accumulator{slot: slot, Low: val, High: val}
 	}
 	accum.Num++
 	accum.Sum += int64(val)
-	accum.ss.Push(float64(val)) //use streaming calc as alternative to recalling set data
 	if val < accum.Low {
 		accum.Low = val
 	}
@@ -95,13 +93,9 @@ func (g *Aggregator) flush(prefix string) {
 	// tags sent out look like this, once converted to JSON:
 	// 	aggregate/meterkast/p3/1m/23275939
 	//	 = {"n":3,"l":2375,"h":2401,"s":7172}
-	if accum,ok := g.stats[prefix]; ok {
-		glog.Infoln("flush", prefix, accum)
-		n := strings.Index(prefix, "/")
-		key := "aggregate" + prefix[n:] + g.step + "/" + strconv.Itoa(accum.slot)
-		if sd, err := accum.ss.StandardDeviation(STDevP); err == nil { //Could use Sample (STDev) or Population (STDevP)
-			accum.StdDev = sd
-		}
-		g.Out.Send(flow.Tag{key, accum})
-	}
+	accum := g.stats[prefix]
+	glog.Infoln("flush", prefix, accum)
+	n := strings.Index(prefix, "/")
+	key := "aggregate" + prefix[n:] + g.step + "/" + strconv.Itoa(accum.slot)
+	g.Out.Send(flow.Tag{key, accum})
 }

@@ -25,14 +25,21 @@ circuits.init =
     { name: "dummy", type: "Pipe" } # needed for dispatcher in HouseMon
     { name: "driverFill", type: "driverFill" } # pre-load the database
     { name: "tableFill", type: "tableFill" }   # pre-load the database
+    { name: "sub2", type: "DataSub" }
+    { name: "aggr", type: "Aggregator" }
+    { name: "db", type: "LevelDB" }
   ]
   wires: [
     { from: "mqtt.PortOut", to: "pub.Port" }
     { from: "sub.Out", to: "pub.In" }
+    { from: "sub2.Out", to: "aggr.In" }
+    { from: "aggr.Out", to: "db.In" }
   ]
   feeds: [
     { data: ":1883",  to: "mqtt.Port" }
     { data: "/",  to: "sub.In" }
+    { data: "sensor/",  to: "sub2.In" }
+    # { data: "1m",  to: "aggr.Step" }
   ]
   labels: [
     { external: "In", internal: "dummy.In" }
