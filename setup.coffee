@@ -37,7 +37,7 @@ circuits.init =
     { from: "aggr.Out", to: "db.In" }
   ]
   feeds: [
-    { data: ":1883",  to: "mqtt.Port" }
+    { data: "127.0.0.1:1883",  to: "mqtt.Port" }
     { data: "/",  to: "sub.In" }
     { data: "sensor/",  to: "sub2.In" }
     # { data: "1m",  to: "aggr.Step" }
